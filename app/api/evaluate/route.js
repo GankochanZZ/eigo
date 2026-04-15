@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import fs from 'fs/promises';
 import path from 'path';
 
-const CACHE_FILE = path.join(process.cwd(), 'criteria_cache.json');
+const CACHE_FILE = '/tmp/criteria_cache.json';
 
 export async function POST(req) {
   try {
