@@ -1,39 +1,138 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import styles from './TestModeRunner.module.css';
 import QuestionCard from './QuestionCard';
-import ReasonInput from './ReasonInput';
 import FeedbackPanel from './FeedbackPanel';
 
+// ── 録音 → バックグラウンド採点専用の入力コンポーネント ──
+function VoiceTestInput({ onRecordingDone, disabled }) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [status, setStatus] = useState('idle'); // 'idle' | 'recording' | 'sending'
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const streamRef = useRef(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        setStatus('sending');
+
+        // Base64化してコールバックに渡す（バックグラウンド送信はTestModeRunnerが担う）
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const b64 = reader.result;
+          const mimeType = b64.split(';')[0].split(':')[1];
+          const audioData = b64.split(',')[1];
+          onRecordingDone({ audioData, mimeType });
+          setStatus('idle');
+        };
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setStatus('recording');
+    } catch (err) {
+      alert('マイクへのアクセスを許可してください。');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const label = {
+    idle: '🎤 音声で回答',
+    recording: '⏹ 停止 (録音中)',
+    sending: '📤 送信中...'
+  }[status];
+
+  return (
+    <button
+      className={`${styles.micBtn} ${status === 'recording' ? styles.micRecording : ''} ${status === 'sending' ? styles.micSending : ''}`}
+      onClick={status === 'recording' ? stopRecording : startRecording}
+      disabled={disabled || status === 'sending'}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ── メインコンポーネント ──
 export default function TestModeRunner({ questions, apiKey }) {
   const [testPhase, setTestPhase] = useState('setup'); // 'setup' | 'running' | 'results'
   const [testQueue, setTestQueue] = useState([]);
   const [currentIdx, setCurrentIdx] = useState(0);
-  
   const [selectedOption, setSelectedOption] = useState(null);
-  const [reason, setReason] = useState('');
-  
-  // { question, selectedOption, reason, feedback: null | object }
+  // { question, selectedOption, feedback: null | object, transcribed: null | string }
   const [testResults, setTestResults] = useState([]);
 
-  // ジャンル一覧の取得
   const genres = useMemo(() => Array.from(new Set(questions.map(q => q.genre))), [questions]);
 
   const startTest = (genre) => {
     let genreQs = questions.filter(q => q.genre === genre);
-    // ランダムに最大5問選出
     genreQs = genreQs.sort(() => 0.5 - Math.random()).slice(0, 5);
-    
     setTestQueue(genreQs);
     setCurrentIdx(0);
     setTestResults([]);
     setSelectedOption(null);
-    setReason('');
     setTestPhase('running');
   };
 
-  const fireEvaluation = async (q, optionIdx, reasonTxt) => {
-    if (!reasonTxt.trim()) {
+  // 音声採点APIを叩く（バックグラウンド）
+  const fireVoiceEvaluate = async (q, optionIdx, audioData, mimeType) => {
+    const activeApiKey = apiKey || localStorage.getItem('gemini_api_key') || '';
+    try {
+      const res = await fetch('/api/voice-evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          audioData,
+          mimeType,
+          apiKey: activeApiKey,
+          id: q.id,
+          question: q.sentence,
+          selectedAnswer: q.options[optionIdx],
+          correctAnswer: q.options[q.correctOption],
+          correctElements: q.correctElements,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        const msg = data.error || '採点エラー';
+        return { error: msg.includes('429') ? '【API制限】約1分待ってから再度お試しください。' : msg };
+      }
+      return {
+        isOptionCorrect: data.isOptionCorrect,
+        aiEvaluation: data.evaluation,
+        aiScore: data.score,
+        correctElements: q.correctElements,
+        explanation: q.explanation,
+        transcribed: data.transcribed,
+      };
+    } catch (e) {
+      return { error: '採点の通信に失敗しました。' };
+    }
+  };
+
+  // 理由なし（テキストなし・音声なし）の採点
+  const fireEvaluationTextOnly = async (q, optionIdx, reasonTxt) => {
+    if (!reasonTxt?.trim()) {
       return {
         isOptionCorrect: optionIdx === q.correctOption,
         aiEvaluation: null,
@@ -43,6 +142,7 @@ export default function TestModeRunner({ questions, apiKey }) {
         skippedAI: true
       };
     }
+    const activeApiKey = apiKey || localStorage.getItem('gemini_api_key') || '';
     try {
       const res = await fetch('/api/evaluate', {
         method: 'POST',
@@ -54,69 +154,103 @@ export default function TestModeRunner({ questions, apiKey }) {
           correctAnswer: q.options[q.correctOption],
           reasonText: reasonTxt,
           correctElements: q.correctElements,
-          apiKey: apiKey
+          apiKey: activeApiKey,
         })
       });
       const data = await res.json();
-      if (!res.ok || data.error) {
-         let errMsg = data.error || '評価に失敗しました。';
-         if (typeof errMsg === 'string' && errMsg.includes('429')) {
-           errMsg = '【API制限】リクエスト制限(1分間に15回等)に達しました。約1分待ってから再度お試しください。';
-         }
-         return { error: errMsg };
-      }
+      if (!res.ok || data.error) return { error: data.error || '評価に失敗しました。' };
       return {
         isOptionCorrect: optionIdx === q.correctOption,
         aiEvaluation: data.evaluation,
-        aiScore: data.score !== undefined ? data.score : NaN,
+        aiScore: data.score,
         correctElements: q.correctElements,
-        explanation: q.explanation
+        explanation: q.explanation,
       };
-    } catch(e) {
-      return { error: '評価に失敗しました。' };
+    } catch {
+      return { error: '評価の通信に失敗しました。' };
     }
   };
 
-  const handleNext = () => {
-    if (selectedOption === null) return;
-    
+  // 録音終了時: 即座に次の問題へ進み、採点はバックグラウンドへ
+  const handleVoiceDone = ({ audioData, mimeType }) => {
+    if (selectedOption === null) {
+      alert('先に選択肢を選んでください。');
+      return;
+    }
     const q = testQueue[currentIdx];
-    const opt = selectedOption;
-    const txt = reason;
-    const resultIndex = currentIdx; 
+    const optionIdx = selectedOption;
+    const resultIndex = testResults.length;
 
-    // 結果配列にプレースホルダーを追加（採点中状態）
+    // プレースホルダー登録（採点中状態）
     setTestResults(prev => [...prev, {
       question: q,
-      selectedOption: opt,
-      reason: txt,
-      feedback: null 
+      selectedOption: optionIdx,
+      transcribed: null,
+      feedback: null,
     }]);
 
-    // バックグラウンドで評価APIを叩き、終わり次第配列の該当インデックスを更新する
-    fireEvaluation(q, opt, txt).then(feedback => {
-       setTestResults(prev => {
-          const newArr = [...prev];
-          if(newArr[resultIndex]) {
-             newArr[resultIndex] = { ...newArr[resultIndex], feedback };
-          }
-          return newArr;
-       });
-    });
-
+    // 次の問題へ即移動 or 結果画面へ
     if (currentIdx < testQueue.length - 1) {
       setSelectedOption(null);
-      setReason('');
-      setCurrentIdx(currentIdx + 1);
+      setCurrentIdx(prev => prev + 1);
     } else {
       setTestPhase('results');
     }
+
+    // バックグラウンドで採点
+    fireVoiceEvaluate(q, optionIdx, audioData, mimeType).then(feedback => {
+      setTestResults(prev => {
+        const arr = [...prev];
+        if (arr[resultIndex]) {
+          arr[resultIndex] = {
+            ...arr[resultIndex],
+            transcribed: feedback.transcribed || null,
+            feedback,
+          };
+        }
+        return arr;
+      });
+    });
+  };
+
+  // 選択肢のみで回答（音声なし）
+  const handleNextNoVoice = () => {
+    if (selectedOption === null) return;
+    const q = testQueue[currentIdx];
+    const optionIdx = selectedOption;
+    const resultIndex = testResults.length;
+
+    setTestResults(prev => [...prev, {
+      question: q,
+      selectedOption: optionIdx,
+      transcribed: null,
+      feedback: null,
+    }]);
+
+    if (currentIdx < testQueue.length - 1) {
+      setSelectedOption(null);
+      setCurrentIdx(prev => prev + 1);
+    } else {
+      setTestPhase('results');
+    }
+
+    // 理由なしで採点
+    fireEvaluationTextOnly(q, optionIdx, '').then(feedback => {
+      setTestResults(prev => {
+        const arr = [...prev];
+        if (arr[resultIndex]) arr[resultIndex] = { ...arr[resultIndex], feedback };
+        return arr;
+      });
+    });
   };
 
   const renderSetup = () => (
     <div className={styles.setupContainer}>
-      <h2 className={styles.setupTitle}>テストモード (5問連続テスト)</h2>
-      <p className={styles.setupDesc}>ジャンルを選択して、ランダムな5問のテストを開始してください。採点はバックグラウンドで行われるため、待ち時間ゼロでサクサク進められます！</p>
+      <h2 className={styles.setupTitle}>テストモード</h2>
+      <p className={styles.setupDesc}>
+        ジャンルを選ぶとランダム5問テストが始まります。<br />
+        音声で回答すると録音停止と同時に採点がバックグラウンドで走るため、待ち時間ゼロで次の問題に進めます。
+      </p>
       <div className={styles.genreGrid}>
         {genres.map(g => (
           <button key={g} className={styles.genreBtn} onClick={() => startTest(g)}>
@@ -134,23 +268,29 @@ export default function TestModeRunner({ questions, apiKey }) {
         <div className={styles.progress}>
           問題 {currentIdx + 1} / {testQueue.length}
         </div>
-        <QuestionCard 
-          question={q} 
+        <QuestionCard
+          question={q}
           selectedOption={selectedOption}
           onSelectOption={setSelectedOption}
         />
-        <ReasonInput 
-          value={reason} 
-          onChange={setReason}
-          disabled={false}
-        />
-        <button 
-          className={styles.submitBtn} 
-          onClick={handleNext}
-          disabled={selectedOption === null}
-        >
-          {currentIdx < testQueue.length - 1 ? '解答して次の問題へ' : '解答してテスト終了'}
-        </button>
+
+        <div className={styles.actionRow}>
+          <VoiceTestInput
+            onRecordingDone={handleVoiceDone}
+            disabled={selectedOption === null}
+          />
+          <button
+            className={styles.skipBtn}
+            onClick={handleNextNoVoice}
+            disabled={selectedOption === null}
+          >
+            {currentIdx < testQueue.length - 1 ? '理由なしで次へ →' : '理由なしで終了'}
+          </button>
+        </div>
+
+        {selectedOption === null && (
+          <p className={styles.hint}>← まず選択肢を選んでください</p>
+        )}
       </div>
     );
   };
@@ -162,11 +302,11 @@ export default function TestModeRunner({ questions, apiKey }) {
     return (
       <div className={styles.resultsContainer}>
         <h2 className={styles.resultsTitle}>テスト結果</h2>
-        
+
         {!isAllFinished && (
           <div className={styles.loadingBanner}>
             <span className={styles.spinner}></span>
-            バックグラウンドで {testQueue.length - finishedCount} 問をAI採点中...
+            バックグラウンドでAI採点中... ({finishedCount}/{testQueue.length} 完了)
           </div>
         )}
 
@@ -174,22 +314,32 @@ export default function TestModeRunner({ questions, apiKey }) {
           {testResults.map((res, index) => (
             <div key={index} className={styles.resultItem}>
               <h3 className={styles.resultQNumber}>問題 {index + 1} (Problem {res.question.id})</h3>
-              <p className={styles.resultSentence}>{res.question.sentence.replace('______', res.selectedOption !== null ? '[' + res.question.options[res.selectedOption] + ']' : '______')}</p>
-              
+              <p className={styles.resultSentence}>
+                {res.question.sentence.replace('______',
+                  res.selectedOption !== null
+                    ? '[' + res.question.options[res.selectedOption] + ']'
+                    : '______'
+                )}
+              </p>
+
               <div className={styles.userAnswers}>
                 <p><strong>あなたの選択:</strong> {res.selectedOption !== null ? res.question.options[res.selectedOption] : '未選択'}</p>
-                <p><strong>あなたの理由:</strong> {res.reason || '（未入力）'}</p>
+                {res.transcribed && (
+                  <p><strong>音声から文字起こし:</strong> {res.transcribed}</p>
+                )}
               </div>
 
               {res.feedback ? (
                 <FeedbackPanel feedback={res.feedback} />
               ) : (
-                <div className={styles.waitingFeedback}>AI採点・解説の生成を待っています...</div>
+                <div className={styles.waitingFeedback}>
+                  <span className={styles.spinner}></span> AI採点中...
+                </div>
               )}
             </div>
           ))}
         </div>
-        
+
         {isAllFinished && (
           <button className={styles.retryBtn} onClick={() => setTestPhase('setup')}>
             もう一度テストをする
