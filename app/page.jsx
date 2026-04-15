@@ -11,7 +11,7 @@ import TestModeRunner from '../components/TestModeRunner';
 import TopHero from '../components/TopHero';
 
 export default function Home() {
-  const [appMode, setAppMode] = useState('practice'); // 'top' | 'practice' | 'test'
+  const [appMode, setAppMode] = useState('top'); // 'top' | 'practice' | 'test'
   const [currentIndex, setCurrentIndex] = useState(0);
   const [globalError, setGlobalError] = useState(null);
 

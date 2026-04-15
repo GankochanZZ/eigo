@@ -2,64 +2,95 @@ import styles from './TopHero.module.css';
 
 export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey, handleApiKeyChange }) {
   return (
-    <div className={styles.heroContainer}>
-      {/* Background Graphic Elements */}
-      <div className={styles.bgBlobRight}></div>
-      <div className={styles.bgBlobLeft}></div>
+    <div className={styles.page}>
 
-      {/* Configuration Modal / Overlay */}
+      {/* Config Modal */}
       {showConfig && (
-        <div className={styles.configModalOverlay} onClick={() => setShowConfig(false)}>
-          <div className={styles.configModal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.configTitle}>⚙️ API設定</h3>
-            <p className={styles.configDesc}>高精度なAI文字起こしと自動採点を利用するためには、GeminiのAPIキーをセットしてください。</p>
-            <input 
-              type="password" 
-              className={styles.configInput} 
-              value={apiKey} 
+        <div className={styles.modalOverlay} onClick={() => setShowConfig(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>⚙️ APIキー設定</h3>
+            <p className={styles.modalDesc}>
+              Gemini APIキーを入力するとAI採点・音声入力が使えます。キーはこのブラウザにのみ保存されます。
+            </p>
+            <input
+              type="password"
+              className={styles.modalInput}
+              value={apiKey}
               onChange={handleApiKeyChange}
-              placeholder="AIzaSy..." 
+              placeholder="AIzaSy..."
             />
-            <p className={styles.configHint}>※未入力の場合はデモ判定モードになります。キーはブラウザにのみ保存されます。</p>
-            <button className={styles.configCloseBtn} onClick={() => setShowConfig(false)}>閉じる</button>
+            <p className={styles.modalHint}>※未入力の場合はデモ判定モードになります。</p>
+            <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
+              閉じる
+            </button>
           </div>
         </div>
       )}
 
-      {/* Main Content */}
-      <div className={styles.content}>
-        <div className={styles.badge}>Next Generation Learning</div>
-        <h1 className={styles.title}>受験英文法</h1>
-        <p className={styles.subtitle}>
-          AIがあなたの「思考プロセス」を完全採点。<br/>
-          暗記から脱却し、真の英語力を身につける新時代の学習アプリ。
+      {/* Header */}
+      <header className={styles.header}>
+        <span className={styles.logo}>📖</span>
+        <span className={styles.logoText}>受験英文法</span>
+        <button className={styles.settingsBtn} onClick={() => setShowConfig(true)}>
+          ⚙️ API設定
+        </button>
+      </header>
+
+      {/* Hero */}
+      <main className={styles.hero}>
+        <div className={styles.badge}>AI × 英文法</div>
+        <h1 className={styles.title}>
+          暗記に頼らない<br />
+          <span className={styles.titleAccent}>新しい英語の学び方</span>
+        </h1>
+        <p className={styles.desc}>
+          4択問題を解いて「なぜその答えか」を説明しよう。<br />
+          AIがあなたの理解度を即時採点します。
         </p>
 
-        <div className={styles.actionArea}>
-          <button 
-            className={`${styles.actionBtn} ${styles.primaryBtn}`} 
+        {/* Mode Cards */}
+        <div className={styles.cards}>
+          <button
+            className={styles.cardPrimary}
             onClick={() => setAppMode('practice')}
-            onTouchEnd={(e) => { e.preventDefault(); setAppMode('practice'); }}
           >
-            <span className={styles.btnIcon}>📝</span>
-            一問一答モードで学習
+            <span className={styles.cardIcon}>📝</span>
+            <div className={styles.cardBody}>
+              <div className={styles.cardTitle}>一問一答モード</div>
+              <div className={styles.cardDesc}>問題を1問ずつ解いてAIに採点してもらう</div>
+            </div>
+            <span className={styles.cardArrow}>→</span>
           </button>
-          <button 
-            className={`${styles.actionBtn} ${styles.secondaryBtn}`} 
+
+          <button
+            className={styles.cardSecondary}
             onClick={() => setAppMode('test')}
-            onTouchEnd={(e) => { e.preventDefault(); setAppMode('test'); }}
           >
-            <span className={styles.btnIcon}>⏱</span>
-            テストモードで腕試し
+            <span className={styles.cardIcon}>⏱️</span>
+            <div className={styles.cardBody}>
+              <div className={styles.cardTitle}>テストモード</div>
+              <div className={styles.cardDesc}>複数問題をまとめて解いてスコアを確認</div>
+            </div>
+            <span className={styles.cardArrow}>→</span>
           </button>
         </div>
 
-        <div className={styles.footerConfig}>
-          <button className={styles.settingsLink} onClick={() => setShowConfig(true)}>
-            ⚙️ APIキーを設定する
-          </button>
+        {/* Features */}
+        <div className={styles.features}>
+          <div className={styles.feature}>
+            <span className={styles.featureIcon}>🤖</span>
+            <div className={styles.featureText}>AI自動採点</div>
+          </div>
+          <div className={styles.feature}>
+            <span className={styles.featureIcon}>🎙️</span>
+            <div className={styles.featureText}>音声入力対応</div>
+          </div>
+          <div className={styles.feature}>
+            <span className={styles.featureIcon}>📊</span>
+            <div className={styles.featureText}>詳しい解説</div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
