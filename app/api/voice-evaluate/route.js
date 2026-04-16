@@ -51,7 +51,7 @@ ${elementsList}
 ]`;
 
       const criteriaRes = await aiClient.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
+        model: 'gemma-4-31b-it',
         contents: criteriaPrompt,
         config: { temperature: 0.1 }
       });
@@ -115,7 +115,7 @@ ${transcribedText || '(理由なし)'}
 }`;
 
     const evalRes = await aiClient.models.generateContent({
-      model: 'gemma-4-26b',
+      model: 'gemma-4-26b-a4b-it',
       contents: evalPrompt,
       config: { temperature: 0.1, responseMimeType: 'application/json' }
     });

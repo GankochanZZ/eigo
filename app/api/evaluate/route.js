@@ -64,7 +64,7 @@ ${elementsList}
 ]
 `;
       const criteriaRes = await aiClient.models.generateContent({
-        model: 'gemma-4-31b',
+        model: 'gemma-4-31b-it',
         contents: criteriaPrompt,
         config: { temperature: 0.1 }
       });
@@ -124,7 +124,7 @@ ${reasonText}
 `;
 
     const response = await aiClient.models.generateContent({
-        model: 'gemma-4-26b',
+        model: 'gemma-4-26b-a4b-it',
         contents: evaluationPrompt,
         config: { 
           temperature: 0.1,
