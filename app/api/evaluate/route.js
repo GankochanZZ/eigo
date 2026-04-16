@@ -4,6 +4,25 @@ import path from 'path';
 
 const CACHE_FILE = '/tmp/criteria_cache.json';
 
+// Gemini API の一時的な500エラーに対するリトライヘルパー
+async function callWithRetry(fn, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err?.message || '';
+      const isRetryable = msg.includes('500') || msg.includes('INTERNAL') || msg.includes('503') || msg.includes('UNAVAILABLE');
+      if (isRetryable && attempt < maxRetries) {
+        const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s, 4s
+        console.log(`[Retry] Attempt ${attempt} failed (${msg}). Retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -63,11 +82,11 @@ ${elementsList}
   ...
 ]
 `;
-      const criteriaRes = await aiClient.models.generateContent({
+      const criteriaRes = await callWithRetry(() => aiClient.models.generateContent({
         model: 'gemma-4-31b-it',
         contents: criteriaPrompt,
         config: { temperature: 0.1 }
-      });
+      }));
       
       let textCriteria = criteriaRes.text.trim();
       if (textCriteria.startsWith('\`\`\`json')) {
@@ -124,14 +143,14 @@ ${reasonText}
 }
 `;
 
-    const response = await aiClient.models.generateContent({
+    const response = await callWithRetry(() => aiClient.models.generateContent({
         model: 'gemini-3.1-flash-lite-preview',
         contents: evaluationPrompt,
         config: { 
           temperature: 0.1,
           responseMimeType: "application/json" 
         }
-    });
+    }));
 
     let textResponse = response.text;
     if (textResponse.startsWith('```json')) {

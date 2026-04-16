@@ -3,6 +3,25 @@ import fs from 'fs/promises';
 
 const CACHE_FILE = '/tmp/criteria_cache.json';
 
+// Gemini API の一時的な500エラーに対するリトライヘルパー
+async function callWithRetry(fn, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const msg = err?.message || '';
+      const isRetryable = msg.includes('500') || msg.includes('INTERNAL') || msg.includes('503') || msg.includes('UNAVAILABLE');
+      if (isRetryable && attempt < maxRetries) {
+        const delay = 1000 * Math.pow(2, attempt - 1);
+        console.log(`[Retry] Attempt ${attempt} failed (${msg}). Retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 export const maxDuration = 60;
 
 export async function POST(req) {
@@ -50,11 +69,11 @@ ${elementsList}
   ...
 ]`;
 
-      const criteriaRes = await aiClient.models.generateContent({
+      const criteriaRes = await callWithRetry(() => aiClient.models.generateContent({
         model: 'gemma-4-31b-it',
         contents: criteriaPrompt,
         config: { temperature: 0.1 }
-      });
+      }));
 
       let textCriteria = criteriaRes.text.trim().replace(/^```json\n?/, '').replace(/```$/, '');
       try {
@@ -71,13 +90,13 @@ ${elementsList}
     let transcribedText = '';
     if (audioData) {
       const transcribePrompt = `Transcribe the speech in this audio exactly as spoken in Japanese.\nOnly remove filler words like "えーと", "あー", "そのー", "うーん".\nDo NOT rephrase, summarize, interpret, or change any words.\nOutput only the transcribed Japanese text, nothing else.`;
-      const transcribeRes = await aiClient.models.generateContent({
+      const transcribeRes = await callWithRetry(() => aiClient.models.generateContent({
         model: 'gemini-3.1-flash-lite-preview',
         contents: [
           transcribePrompt,
           { inlineData: { mimeType: mimeType || 'audio/webm', data: audioData } }
         ]
-      });
+      }));
       transcribedText = transcribeRes.text.trim();
     }
 
@@ -117,11 +136,11 @@ ${transcribedText || '(理由なし)'}
   "evaluation": "基準に基づく具体的な解説（フォローの言葉は含めない。最大350文字）"
 }`;
 
-    const evalRes = await aiClient.models.generateContent({
+    const evalRes = await callWithRetry(() => aiClient.models.generateContent({
       model: 'gemini-3.1-flash-lite-preview',
       contents: evalPrompt,
       config: { temperature: 0.1, responseMimeType: 'application/json' }
-    });
+    }));
 
     let text = evalRes.text.trim().replace(/^```json\n?/, '').replace(/```$/, '');
     const match = text.match(/\{[\s\S]*\}/);

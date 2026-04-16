@@ -12,7 +12,7 @@ import TopHero from '../components/TopHero';
 
 export default function Home() {
   const [appMode, setAppModeState] = useState('top'); // 'top' | 'practice' | 'test'
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(null);
   const [globalError, setGlobalError] = useState(null);
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function Home() {
     localStorage.setItem('gemini_api_key', e.target.value);
   };
 
-  const currentQuestion = questions[currentIndex];
+  const currentQuestion = currentIndex !== null ? questions[currentIndex] : null;
 
   const handleSubmit = () => submitExplanation(reason);
 
@@ -114,6 +114,8 @@ export default function Home() {
          let errMsg = data.error || 'APIからの応答が不正です。';
          if (typeof errMsg === 'string' && errMsg.includes('429')) {
            errMsg = '【API制限】無償枠のリクエスト制限に達しました。約1分待ってから再度お試しください。';
+         } else if (typeof errMsg === 'string' && (errMsg.includes('500') || errMsg.includes('INTERNAL'))) {
+           errMsg = '【サーバーエラー】Google APIで一時的な障害が発生しています。しばらく待ってから再度お試しください。';
          }
          throw new Error(errMsg);
       }
@@ -168,11 +170,11 @@ export default function Home() {
         </div>
       )}
       <div className={styles.mobileHeader}>
-        <button className={styles.backBtn} onClick={() => setAppMode('top')}>← トップ</button>
         <button className={styles.hamburgerBtn} onClick={() => setIsSidebarOpen(true)}>
           ☰ メニュー
         </button>
-        <span className={styles.mobileTitle}>鑑真英語</span>
+        <span className={styles.mobileTitle} onClick={() => setAppMode('top')}>鑑真英語</span>
+        <div style={{ width: '40px' }}></div> {/* バランス調整用の空要素 */}
       </div>
 
       <Sidebar 
@@ -226,49 +228,63 @@ export default function Home() {
         {appMode === 'test' ? (
           <TestModeRunner questions={questions} apiKey={apiKey} />
         ) : (
-          <>
-            <QuestionCard 
-              question={currentQuestion} 
-              selectedOption={selectedOption}
-              onSelectOption={(idx) => {
-                if (!feedback) setSelectedOption(idx);
-              }}
-            />
+          !currentQuestion ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIcon}>👈</div>
+              <h3>問題を選択してください</h3>
+              <p>左側のメニューから挑戦する問題を選んでください。</p>
+              <button 
+                className={styles.mobileMenuOpenBtn} 
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                メニューを開く
+              </button>
+            </div>
+          ) : (
+            <>
+              <QuestionCard 
+                question={currentQuestion} 
+                selectedOption={selectedOption}
+                onSelectOption={(idx) => {
+                  if (!feedback) setSelectedOption(idx);
+                }}
+              />
 
-        <ReasonInput 
-          value={reason} 
-          onChange={(val) => {
-            if (!feedback) setReason(val);
-          }}
-          disabled={feedback !== null || selectedOption === null}
-        />
+              <ReasonInput 
+                value={reason} 
+                onChange={(val) => {
+                  if (!feedback) setReason(val);
+                }}
+                disabled={feedback !== null || selectedOption === null}
+              />
 
-        {!feedback && (
-          <button 
-            className={styles.submitBtn} 
-            onClick={handleSubmit}
-            disabled={selectedOption === null || isEvaluating}
-          >
-            {isEvaluating ? (
-              <div className={styles.evaluating}>
-                <span className={styles.spinner}></span>
-                判定中...
-              </div>
-            ) : (
-              '解答と理由を送信'
-            )}
-          </button>
-        )}
+              {!feedback && (
+                <button 
+                  className={styles.submitBtn} 
+                  onClick={handleSubmit}
+                  disabled={selectedOption === null || isEvaluating}
+                >
+                  {isEvaluating ? (
+                    <div className={styles.evaluating}>
+                      <span className={styles.spinner}></span>
+                      判定中...
+                    </div>
+                  ) : (
+                    '解答と理由を送信'
+                  )}
+                </button>
+              )}
 
-        {feedback && (
-          <>
-            <FeedbackPanel feedback={feedback} />
-            <button className={styles.nextBtn} onClick={handleNext}>
-              次の問題へ
-            </button>
-          </>
-        )}
-        </>
+              {feedback && (
+                <>
+                  <FeedbackPanel feedback={feedback} />
+                  <button className={styles.nextBtn} onClick={handleNext}>
+                    次の問題へ
+                  </button>
+                </>
+              )}
+            </>
+          )
         )}
         </main>
         </div>

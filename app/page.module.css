@@ -286,6 +286,21 @@
   }
   .mobileHeader {
     display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .hamburgerBtn {
+    padding: 0.4rem;
+    margin-right: auto;
+  }
+  .mobileTitle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
   }
   .header {
     margin-top: 1rem;
@@ -297,3 +312,45 @@
     padding: 1rem;
   }
 }
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-color);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.emptyState h3 {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+  margin-bottom: 2rem;
+}
+
+.mobileMenuOpenBtn {
+  display: none;
+  background: var(--primary-color);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .mobileMenuOpenBtn {
+    display: inline-block;
+  }
+}
+
