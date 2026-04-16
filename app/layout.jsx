@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: '受験英文法',
+  title: '鑑真英語',
   description: '理由も問う4択問題アプリ',
 };
 

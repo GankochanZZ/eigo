@@ -172,7 +172,7 @@ export default function Home() {
         <button className={styles.hamburgerBtn} onClick={() => setIsSidebarOpen(true)}>
           ☰ メニュー
         </button>
-        <span className={styles.mobileTitle}>受験英文法</span>
+        <span className={styles.mobileTitle}>鑑真英語</span>
       </div>
 
       <Sidebar 
@@ -217,7 +217,7 @@ export default function Home() {
 
       <header className={styles.header}>
         <h1 className={styles.title} onClick={() => setAppMode('top')} style={{ cursor: 'pointer' }}>
-          受験英文法
+          鑑真英語
         </h1>
         <p className={styles.subtitle}>「なぜその答えになるのか」を説明して、真の英語力を身につけよう。</p>
       </header>

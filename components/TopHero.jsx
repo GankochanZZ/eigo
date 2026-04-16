@@ -30,7 +30,7 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
       {/* Header */}
       <header className={styles.header}>
         <span className={styles.logo}>📖</span>
-        <span className={styles.logoText}>受験英文法</span>
+        <span className={styles.logoText}>鑑真英語</span>
         <button className={styles.settingsBtn} onClick={() => setShowConfig(true)}>
           ⚙️ API設定
         </button>
@@ -38,7 +38,7 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
 
       {/* Hero */}
       <main className={styles.hero}>
-        <div className={styles.badge}>AI × 受験英語</div>
+        <div className={styles.badge}>AI × 鑑真英語</div>
         <h1 className={styles.title}>
           暗記に頼らない<br />
           <span className={styles.titleAccent}>新しい英語の学び方</span>
