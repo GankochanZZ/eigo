@@ -51,7 +51,7 @@ ${elementsList}
 ]`;
 
       const criteriaRes = await aiClient.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.1-flash-lite',
         contents: criteriaPrompt,
         config: { temperature: 0.1 }
       });
@@ -111,7 +111,7 @@ ${rubricString}
       : combinedPrompt;
 
     const response = await aiClient.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents,
       config: { temperature: 0.1, responseMimeType: 'application/json' }
     });

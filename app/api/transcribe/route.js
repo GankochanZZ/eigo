@@ -26,7 +26,7 @@ export async function POST(req) {
 装飾や「要約すると」などの前置きは一切不要で、要約された理由のテキストのみを出力してください。`;
 
     const response = await aiClient.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.1-flash-lite',
       contents: [
         prompt,
         {
