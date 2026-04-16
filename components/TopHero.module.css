@@ -91,15 +91,92 @@
   max-width: 480px;
 }
 
-/* ===== Mode Cards ===== */
-.cards {
-  display: flex;
-  flex-direction: column;
+/* ===== Subject Grid ===== */
+.subjectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   margin-bottom: 3rem;
 }
+
+/* ロック済み（近日公開）カード */
+.subjectCardLocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* アクティブ（文法）カード */
+.subjectCardActive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.25));
+  border: 1px solid rgba(129,140,248,0.4);
+  box-shadow: 0 0 24px rgba(99,102,241,0.15);
+}
+
+.subjectIcon {
+  font-size: 1.8rem;
+}
+
+.subjectName {
+  font-size: 1rem;
+  font-weight: 800;
+  color: white;
+}
+
+.comingSoon {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.06);
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.1);
+  letter-spacing: 0.05em;
+}
+
+.subjectModes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.modeBtn {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s;
+}
+
+.modeBtn:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.modeBtn:active {
+  background: rgba(255,255,255,0.28);
+}
+
 
 .cardPrimary,
 .cardSecondary {

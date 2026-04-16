@@ -38,41 +38,60 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
 
       {/* Hero */}
       <main className={styles.hero}>
-        <div className={styles.badge}>AI × 英文法</div>
+        <div className={styles.badge}>AI × 受験英語</div>
         <h1 className={styles.title}>
           暗記に頼らない<br />
           <span className={styles.titleAccent}>新しい英語の学び方</span>
         </h1>
         <p className={styles.desc}>
-          4択問題を解いて「なぜその答えか」を説明しよう。<br />
-          AIがあなたの理解度を即時採点します。
+          単語・文法・解釈・長文をAIと一緒に学ぼう。<br />
+          「なぜ」を説明することで、本物の英語力が身につく。
         </p>
 
-        {/* Mode Cards */}
-        <div className={styles.cards}>
-          <button
-            className={styles.cardPrimary}
-            onClick={() => setAppMode('practice')}
-          >
-            <span className={styles.cardIcon}>📝</span>
-            <div className={styles.cardBody}>
-              <div className={styles.cardTitle}>一問一答モード</div>
-              <div className={styles.cardDesc}>問題を1問ずつ解いてAIに採点してもらう</div>
-            </div>
-            <span className={styles.cardArrow}>→</span>
-          </button>
+        {/* Subject Cards */}
+        <div className={styles.subjectGrid}>
 
-          <button
-            className={styles.cardSecondary}
-            onClick={() => setAppMode('test')}
-          >
-            <span className={styles.cardIcon}>⏱️</span>
-            <div className={styles.cardBody}>
-              <div className={styles.cardTitle}>テストモード</div>
-              <div className={styles.cardDesc}>複数問題をまとめて解いてスコアを確認</div>
+          {/* 単語 - Coming Soon */}
+          <div className={styles.subjectCardLocked}>
+            <span className={styles.subjectIcon}>🔤</span>
+            <div className={styles.subjectName}>単語</div>
+            <div className={styles.comingSoon}>近日公開</div>
+          </div>
+
+          {/* 文法 - Active */}
+          <div className={styles.subjectCardActive}>
+            <span className={styles.subjectIcon}>📝</span>
+            <div className={styles.subjectName}>文法</div>
+            <div className={styles.subjectModes}>
+              <button
+                className={styles.modeBtn}
+                onClick={() => setAppMode('practice')}
+              >
+                一問一答
+              </button>
+              <button
+                className={styles.modeBtn}
+                onClick={() => setAppMode('test')}
+              >
+                テスト
+              </button>
             </div>
-            <span className={styles.cardArrow}>→</span>
-          </button>
+          </div>
+
+          {/* 解釈 - Coming Soon */}
+          <div className={styles.subjectCardLocked}>
+            <span className={styles.subjectIcon}>🔍</span>
+            <div className={styles.subjectName}>解釈</div>
+            <div className={styles.comingSoon}>近日公開</div>
+          </div>
+
+          {/* 長文 - Coming Soon */}
+          <div className={styles.subjectCardLocked}>
+            <span className={styles.subjectIcon}>📄</span>
+            <div className={styles.subjectName}>長文</div>
+            <div className={styles.comingSoon}>近日公開</div>
+          </div>
+
         </div>
 
         {/* Features */}
