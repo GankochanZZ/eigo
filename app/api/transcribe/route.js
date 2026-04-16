@@ -20,9 +20,9 @@ export async function POST(req) {
     }
 
     const aiClient = new GoogleGenAI({ apiKey: activeApiKey });
-    const prompt = `この音声を文字起こしして、発話内容をそのまま正確に書き起こしてください。
-ただし「えーと」「あー」「そのー」等のフィラーと、明らかな言い直しの前の発話だけ削除してください。
-内容の要約・言い換え・補足・解釈は一切禁止です。話した言葉をそのままテキストにしてください。`;
+    const prompt = `この音声を文字起こしして、発話内容を自然な日本語に整えてください。
+ルール：「えーと」「あー」「そのー」等のフィラーと言い淀みを削除。語尾や助詞の崩れを自然に直す。
+ただし内容・意味・単語の追加や削除は絶対にしないでください。話した内容の骨格はそのまま残してください。`;
 
     const response = await aiClient.models.generateContent({
       model: 'gemini-2.5-flash-lite',
