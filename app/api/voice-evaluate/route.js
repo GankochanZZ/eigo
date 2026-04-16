@@ -70,7 +70,10 @@ ${elementsList}
     // ── フェーズ2-A: 音声の文字起こし (Gemini 3.1 Flash Lite) ──
     let transcribedText = '';
     if (audioData) {
-      const transcribePrompt = `以下は生徒が文法問題の解答理由を録音した音声です。「あー」「えーと」などのフィラーを除去し、音声の内容をそのまま文字起こしして整理した文章を出力してください。`;
+      const transcribePrompt = `以下は生徒が文法問題の解答理由を録音した音声です。
+聞こえた内容を一言一句そのまま正確に文字起こししてください。
+ただし、「あー」「えーと」などの不要なフィラーのみ除去してください。
+【重要】絶対に発言内容を要約したり、表現を書き換えたりしないでください。文字起こししたテキストのみを出力してください。`;
       const transcribeRes = await aiClient.models.generateContent({
         model: 'gemini-2.5-flash-lite',
         contents: [
