@@ -216,9 +216,6 @@ export default function Home() {
           onChange={(val) => {
             if (!feedback) setReason(val);
           }}
-          onVoiceComplete={(finalReason) => {
-            if (!feedback) submitExplanation(finalReason);
-          }}
           disabled={feedback !== null || selectedOption === null}
         />
 
