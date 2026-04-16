@@ -70,7 +70,7 @@ ${elementsList}
     // ── フェーズ2-A: 音声の文字起こし (Gemini 3.1 Flash Lite) ──
     let transcribedText = '';
     if (audioData) {
-      const transcribePrompt = `この音声を文字起こしして、発話内容を自然な日本語に整えてください。ルール：「えーと」「あー」「そのー」等のフィラーと言い淀みを削除。語尾や助詞の崩れを自然に直す。ただし内容・意味・単語の追加や削除は絶対にしないでください。話した内容の骨格はそのまま残してください。`;
+      const transcribePrompt = `Transcribe the speech in this audio exactly as spoken in Japanese.\nOnly remove filler words like "えーと", "あー", "そのー", "うーん".\nDo NOT rephrase, summarize, interpret, or change any words.\nOutput only the transcribed Japanese text, nothing else.`;
       const transcribeRes = await aiClient.models.generateContent({
         model: 'gemini-3.1-flash-lite-preview',
         contents: [
