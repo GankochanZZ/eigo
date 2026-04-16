@@ -52,7 +52,7 @@ have to be doing （正誤: 不正解）
 `;
   
   const response = await aiClient.models.generateContent({
-        model: 'gemini-3.1-flash-lite',
+        model: 'gemini-3.1-flash-lite-preview',
         contents: evaluationPrompt,
         config: { 
           temperature: 0.1,
