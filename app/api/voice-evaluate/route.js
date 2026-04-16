@@ -72,7 +72,7 @@ ${elementsList}
     if (audioData) {
       const transcribePrompt = `この音声を文字起こしして、発話内容を自然な日本語に整えてください。ルール：「えーと」「あー」「そのー」等のフィラーと言い淀みを削除。語尾や助詞の崩れを自然に直す。ただし内容・意味・単語の追加や削除は絶対にしないでください。話した内容の骨格はそのまま残してください。`;
       const transcribeRes = await aiClient.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3.1-flash-lite-preview',
         contents: [
           transcribePrompt,
           { inlineData: { mimeType: mimeType || 'audio/webm', data: audioData } }
