@@ -20,10 +20,9 @@ export async function POST(req) {
     }
 
     const aiClient = new GoogleGenAI({ apiKey: activeApiKey });
-    const prompt = `以下は生徒が文法問題の解答理由を吹き込んだ音声です。
-聞こえた内容を一言一句そのまま正確に文字起こししてください。
-ただし、「あー」「えーと」「そのー」などの不要なフィラー（言い淀み）のみ除去してください。
-【重要】絶対に発言内容を要約したり、生徒が言っていない言葉を補ったり、別の表現に書き換えたりしないでください。文字起こししたテキストのみを出力してください。`;
+    const prompt = `この音声を文字起こしして、発話内容をそのまま正確に書き起こしてください。
+ただし「えーと」「あー」「そのー」等のフィラーと、明らかな言い直しの前の発話だけ削除してください。
+内容の要約・言い換え・補足・解釈は一切禁止です。話した言葉をそのままテキストにしてください。`;
 
     const response = await aiClient.models.generateContent({
       model: 'gemini-2.5-flash-lite',
