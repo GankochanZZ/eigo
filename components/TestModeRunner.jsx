@@ -79,6 +79,7 @@ export default function TestModeRunner({ questions, apiKey }) {
   const [testQueue, setTestQueue] = useState([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [reasonText, setReasonText] = useState('');
   // { question, selectedOption, feedback: null | object, transcribed: null | string }
   const [testResults, setTestResults] = useState([]);
 
@@ -91,6 +92,7 @@ export default function TestModeRunner({ questions, apiKey }) {
     setCurrentIdx(0);
     setTestResults([]);
     setSelectedOption(null);
+    setReasonText('');
     setTestPhase('running');
   };
 
@@ -192,6 +194,7 @@ export default function TestModeRunner({ questions, apiKey }) {
     // 次の問題へ即移動 or 結果画面へ
     if (currentIdx < testQueue.length - 1) {
       setSelectedOption(null);
+      setReasonText('');
       setCurrentIdx(prev => prev + 1);
     } else {
       setTestPhase('results');
@@ -213,29 +216,31 @@ export default function TestModeRunner({ questions, apiKey }) {
     });
   };
 
-  // 選択肢のみで回答（音声なし）
-  const handleNextNoVoice = () => {
+  // テキスト・理由なしで回答
+  const handleNextWithText = () => {
     if (selectedOption === null) return;
     const q = testQueue[currentIdx];
     const optionIdx = selectedOption;
     const resultIndex = testResults.length;
+    const currentReasonText = reasonText;
 
     setTestResults(prev => [...prev, {
       question: q,
       selectedOption: optionIdx,
-      transcribed: null,
+      transcribed: currentReasonText ? currentReasonText : null,
       feedback: null,
     }]);
 
     if (currentIdx < testQueue.length - 1) {
       setSelectedOption(null);
+      setReasonText('');
       setCurrentIdx(prev => prev + 1);
     } else {
       setTestPhase('results');
     }
 
-    // 理由なしで採点
-    fireEvaluationTextOnly(q, optionIdx, '').then(feedback => {
+    // 理由テキストありなし問わずテキスト用関数で採点
+    fireEvaluationTextOnly(q, optionIdx, currentReasonText).then(feedback => {
       setTestResults(prev => {
         const arr = [...prev];
         if (arr[resultIndex]) arr[resultIndex] = { ...arr[resultIndex], feedback };
@@ -274,6 +279,15 @@ export default function TestModeRunner({ questions, apiKey }) {
           onSelectOption={setSelectedOption}
         />
 
+        <textarea
+          className={styles.textarea}
+          placeholder="解答理由を文字で入力することもできます（任意）"
+          value={reasonText}
+          onChange={(e) => setReasonText(e.target.value)}
+          rows={3}
+          disabled={selectedOption === null}
+        />
+
         <div className={styles.actionRow}>
           <VoiceTestInput
             onRecordingDone={handleVoiceDone}
@@ -281,10 +295,10 @@ export default function TestModeRunner({ questions, apiKey }) {
           />
           <button
             className={styles.skipBtn}
-            onClick={handleNextNoVoice}
+            onClick={handleNextWithText}
             disabled={selectedOption === null}
           >
-            {currentIdx < testQueue.length - 1 ? '理由なしで次へ →' : '理由なしで終了'}
+            {reasonText.trim() ? (currentIdx < testQueue.length - 1 ? '決定・次へ →' : '決定・終了') : (currentIdx < testQueue.length - 1 ? '理由なしで次へ →' : '理由なしで終了')}
           </button>
         </div>
 
@@ -325,7 +339,7 @@ export default function TestModeRunner({ questions, apiKey }) {
               <div className={styles.userAnswers}>
                 <p><strong>あなたの選択:</strong> {res.selectedOption !== null ? res.question.options[res.selectedOption] : '未選択'}</p>
                 {res.transcribed && (
-                  <p><strong>音声から文字起こし:</strong> {res.transcribed}</p>
+                  <p><strong>解答理由:</strong> {res.transcribed}</p>
                 )}
               </div>
 
