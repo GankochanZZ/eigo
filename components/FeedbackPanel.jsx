@@ -26,14 +26,22 @@ export default function FeedbackPanel({ feedback }) {
 
       {!feedback.skippedAI && (
         <div className={styles.section}>
-          <h4 className={styles.label}>理由の評価 ({feedback.aiScore} / 100点):</h4>
-          <div className={styles.scoreBarContainer}>
-            <div 
-              className={styles.scoreBar} 
-              style={{ width: `${feedback.aiScore}%`, background: feedback.aiScore >= 80 ? 'var(--success-color)' : feedback.aiScore >= 50 ? '#fbbf24' : 'var(--error-color)' }}
-            />
-          </div>
-          <p className={styles.aiFeedback}>{feedback.aiEvaluation}</p>
+          <h4 className={styles.label}>理由の評価 {feedback.isEvaluating ? '' : `(${feedback.aiScore} / 100点)`}:</h4>
+          {feedback.isEvaluating ? (
+             <div className={styles.evaluatingState}>
+               <span className={styles.spinner}></span> AIが採点基準を照らし合わせています...
+             </div>
+          ) : (
+            <>
+              <div className={styles.scoreBarContainer}>
+                <div 
+                  className={styles.scoreBar} 
+                  style={{ width: `${feedback.aiScore}%`, background: feedback.aiScore >= 80 ? 'var(--success-color)' : feedback.aiScore >= 50 ? '#fbbf24' : 'var(--error-color)' }}
+                />
+              </div>
+              <p className={styles.aiFeedback}>{feedback.aiEvaluation}</p>
+            </>
+          )}
         </div>
       )}
 

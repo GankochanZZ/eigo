@@ -62,7 +62,14 @@ export default function Home() {
     }
 
     setIsEvaluating(true);
-    setFeedback(null);
+    setFeedback({
+      isOptionCorrect: selectedOption === currentQuestion.correctOption,
+      aiEvaluation: null,
+      aiScore: null,
+      correctElements: currentQuestion.correctElements,
+      explanation: currentQuestion.explanation,
+      isEvaluating: true
+    });
 
     try {
       const response = await fetch('/api/evaluate', {
