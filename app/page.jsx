@@ -43,10 +43,12 @@ export default function Home() {
 
   const currentQuestion = questions[currentIndex];
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => submitExplanation(reason);
+
+  const submitExplanation = async (textToSubmit) => {
     if (selectedOption === null) return;
 
-    if (!reason.trim()) {
+    if (!textToSubmit.trim()) {
       // AI採点スキップ処理
       setFeedback({
         isOptionCorrect: selectedOption === currentQuestion.correctOption,
@@ -71,7 +73,7 @@ export default function Home() {
           question: currentQuestion.sentence,
           selectedAnswer: currentQuestion.options[selectedOption],
           correctAnswer: currentQuestion.options[currentQuestion.correctOption],
-          reasonText: reason,
+          reasonText: textToSubmit,
           correctElements: currentQuestion.correctElements,
           apiKey: apiKey
         }),
@@ -207,7 +209,10 @@ export default function Home() {
           onChange={(val) => {
             if (!feedback) setReason(val);
           }}
-          disabled={feedback !== null}
+          onVoiceComplete={(finalReason) => {
+            if (!feedback) submitExplanation(finalReason);
+          }}
+          disabled={feedback !== null || selectedOption === null}
         />
 
         {!feedback && (

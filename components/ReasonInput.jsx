@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from './ReasonInput.module.css';
 
-export default function ReasonInput({ value, onChange, disabled }) {
+export default function ReasonInput({ value, onChange, disabled, onVoiceComplete }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -50,7 +50,9 @@ export default function ReasonInput({ value, onChange, disabled }) {
               });
               const data = await res.json();
               if (data.text) {
-                onChange(value + (value ? ' ' : '') + data.text);
+                const newText = value + (value ? ' ' : '') + data.text;
+                onChange(newText);
+                if (onVoiceComplete) onVoiceComplete(newText);
               } else if (data.error) {
                 alert('文字起こしエラー: ' + data.error);
               }
