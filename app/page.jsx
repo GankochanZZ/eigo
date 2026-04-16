@@ -11,7 +11,7 @@ import TestModeRunner from '../components/TestModeRunner';
 import TopHero from '../components/TopHero';
 
 export default function Home() {
-  const [appMode, setAppMode] = useState('top'); // 'top' | 'practice' | 'test'
+  const [appMode, setAppModeState] = useState('top'); // 'top' | 'practice' | 'test'
   const [currentIndex, setCurrentIndex] = useState(0);
   const [globalError, setGlobalError] = useState(null);
 
@@ -22,6 +22,28 @@ export default function Home() {
     };
     window.addEventListener('error', (e) => handleErr(e.message, e.filename, e.lineno, e.colno, e.error));
     window.addEventListener('unhandledrejection', (e) => setGlobalError(e.reason ? e.reason.toString() : 'Unhandled Promise Rejection'));
+  }, []);
+
+  // ブラウザ履歴に積みつつモードを変更
+  const setAppMode = (mode) => {
+    if (mode === 'top') {
+      history.pushState({ mode: 'top' }, '', '/');
+    } else {
+      history.pushState({ mode }, '', `?mode=${mode}`);
+    }
+    setAppModeState(mode);
+  };
+
+  // ブラウザの戻る / 進むボタンに対応
+  useEffect(() => {
+    const handlePopState = (e) => {
+      const mode = e.state?.mode ?? 'top';
+      setAppModeState(mode);
+    };
+    window.addEventListener('popstate', handlePopState);
+    // 初回アクセス時に top を履歴に積む
+    history.replaceState({ mode: 'top' }, '', '/');
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
   const [selectedOption, setSelectedOption] = useState(null);
   const [reason, setReason] = useState('');
