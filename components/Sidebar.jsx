@@ -7,7 +7,7 @@ export default function Sidebar({ currentIndex, onSelectQuestion, isOpen, onClos
   const groupedQuestions = useMemo(() => {
     return questions.reduce((acc, q, index) => {
       if (!acc[q.genre]) acc[q.genre] = [];
-      acc[q.genre].push({ id: q.id, originalIndex: index });
+      acc[q.genre].push({ id: q.id, originalIndex: index, difficulty: q.difficulty || '' });
       return acc;
     }, {});
   }, []);
@@ -52,7 +52,7 @@ export default function Sidebar({ currentIndex, onSelectQuestion, isOpen, onClos
                       if (onClose) onClose();
                     }}
                   >
-                    📝 Problem {q.id}
+                    問題{q.id} {q.difficulty && <span className={styles.diffBadge} data-level={q.difficulty}>{q.difficulty}</span>}
                   </button>
                 ))}
               </div>

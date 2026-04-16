@@ -110,5 +110,41 @@
     background: rgba(0,0,0,0.4);
     z-index: 99;
     backdrop-filter: blur(2px);
-  }
 }
+
+.diffBadge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+}
+
+.diffBadge[data-level="A"] {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.diffBadge[data-level="B"] {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.diffBadge[data-level="C"] {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.diffBadge[data-level="D"] {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
