@@ -72,7 +72,7 @@ ${elementsList}
     if (audioData) {
       const transcribePrompt = `以下は生徒が文法問題の解答理由を録音した音声です。「あー」「えーと」などのフィラーを除去し、生徒が意図している解答理由を簡潔な文章で出力してください。要約されたテキストのみを出力してください。`;
       const transcribeRes = await aiClient.models.generateContent({
-        model: 'gemini-3.1-flash-lite-preview',
+        model: 'gemma-4-31b-it',
         contents: [
           transcribePrompt,
           { inlineData: { mimeType: mimeType || 'audio/webm', data: audioData } }
@@ -115,7 +115,7 @@ ${transcribedText || '(理由なし)'}
 }`;
 
     const evalRes = await aiClient.models.generateContent({
-      model: 'gemma-4-26b-a4b-it',
+      model: 'gemini-3.1-flash-lite-preview',
       contents: evalPrompt,
       config: { temperature: 0.1, responseMimeType: 'application/json' }
     });

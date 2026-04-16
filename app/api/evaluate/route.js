@@ -124,7 +124,7 @@ ${reasonText}
 `;
 
     const response = await aiClient.models.generateContent({
-        model: 'gemma-4-26b-a4b-it',
+        model: 'gemini-3.1-flash-lite-preview',
         contents: evaluationPrompt,
         config: { 
           temperature: 0.1,
