@@ -43,6 +43,6 @@ export async function POST(req) {
 
   } catch (error) {
     console.error('Transcription API error:', error);
-    return new Response(JSON.stringify({ error: '音声の文字起こしに失敗しました。' }), { status: 500 });
+    return new Response(JSON.stringify({ error: '文字起こし失敗: ' + (error.message || error) }), { status: 500 });
   }
 }

@@ -136,7 +136,7 @@ ${transcribedText || '(理由なし)'}
   } catch (error) {
     console.error('voice-evaluate error:', error);
     return new Response(
-      JSON.stringify({ error: error.message || '処理中にエラーが発生しました。' }),
+      JSON.stringify({ error: '音声処理エラー: ' + (error.message || '処理中にエラーが発生しました。') }),
       { status: 500 }
     );
   }
