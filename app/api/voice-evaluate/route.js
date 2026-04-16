@@ -67,20 +67,29 @@ ${elementsList}
       await fs.writeFile(CACHE_FILE, JSON.stringify(cache, null, 2), 'utf-8');
     }
 
-    // ── フェーズ2: 音声→採点を1つのプロンプトで同時処理 ──
+    // ── フェーズ2-A: 音声の文字起こし (Gemini 3.1 Flash Lite) ──
+    let transcribedText = '';
+    if (audioData) {
+      const transcribePrompt = `以下は生徒が文法問題の解答理由を録音した音声です。「あー」「えーと」などのフィラーを除去し、生徒が意図している解答理由を簡潔な文章で出力してください。要約されたテキストのみを出力してください。`;
+      const transcribeRes = await aiClient.models.generateContent({
+        model: 'gemini-3.1-flash-lite-preview',
+        contents: [
+          transcribePrompt,
+          { inlineData: { mimeType: mimeType || 'audio/webm', data: audioData } }
+        ]
+      });
+      transcribedText = transcribeRes.text.trim();
+    }
+
+    // ── フェーズ2-B: テキスト採点とフィードバック出力 (Gemma 4 26B) ──
     const rubricString = typeof aiCriteria === 'string'
       ? aiCriteria
       : JSON.stringify(aiCriteria, null, 2);
 
     const isOptionCorrect = selectedAnswer === correctAnswer;
 
-    const combinedPrompt = `あなたは受験英語の採点・指導を行うAIです。
-以下の音声は生徒が文法問題の解答理由を録音したものです。
-
-【タスク】
-1. 音声の内容を文字起こしし、「あー」「えーと」などのフィラーを除去して整理した理由文を作成する。
-2. 整理した理由文を、以下の配点基準に照らし合わせて採点する。
-3. フィードバックを生成する。
+    const evalPrompt = `あなたは受験英語の採点・指導を行うAIです。
+以下の生徒の解答理由を配点基準に照らし合わせて採点し、フィードバックを生成してください。
 
 【問題文】
 ${question}
@@ -90,6 +99,9 @@ ${correctAnswer}（正誤: ${isOptionCorrect ? '正解' : '不正解'}）
 【配点基準（合計100点）】
 ${rubricString}
 
+【生徒の解答理由】
+${transcribedText || '(理由なし)'}
+
 【フィードバックのルール】
 ・100点でない場合は何が不足していたかを具体的に指摘する
 ・箇条書き（・）と改行で見やすくまとめる
@@ -98,32 +110,24 @@ ${rubricString}
 
 以下のJSONのみを出力してください（Markdownタグ不要）:
 {
-  "transcribed": "整理した理由文",
   "score": 0〜100の整数,
   "evaluation": "改行\\nを使った見やすいフィードバック（最大400文字）"
 }`;
 
-    const contents = audioData
-      ? [
-          combinedPrompt,
-          { inlineData: { mimeType: mimeType || 'audio/webm', data: audioData } }
-        ]
-      : combinedPrompt;
-
-    const response = await aiClient.models.generateContent({
-      model: 'gemini-3.1-flash-lite-preview',
-      contents,
+    const evalRes = await aiClient.models.generateContent({
+      model: 'gemma-4-26b',
+      contents: evalPrompt,
       config: { temperature: 0.1, responseMimeType: 'application/json' }
     });
 
-    let text = response.text.trim().replace(/^```json\n?/, '').replace(/```$/, '');
+    let text = evalRes.text.trim().replace(/^```json\n?/, '').replace(/```$/, '');
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('JSON抽出失敗: ' + text.substring(0, 80));
 
     const parsed = JSON.parse(match[0]);
 
     return new Response(JSON.stringify({
-      transcribed: parsed.transcribed || '',
+      transcribed: transcribedText,
       score: parsed.score ?? NaN,
       evaluation: parsed.evaluation || '',
       isOptionCorrect
