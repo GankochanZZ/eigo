@@ -146,6 +146,7 @@ export default function Home() {
         </div>
       )}
       <div className={styles.mobileHeader}>
+        <button className={styles.backBtn} onClick={() => setAppMode('top')}>← トップ</button>
         <button className={styles.hamburgerBtn} onClick={() => setIsSidebarOpen(true)}>
           ☰ メニュー
         </button>
@@ -162,6 +163,7 @@ export default function Home() {
       <div className={styles.mainArea}>
         <div className={styles.contentWrapper}>
           <div className={styles.topBar}>
+            <button className={styles.backToTopBtn} onClick={() => setAppMode('top')}>← トップ</button>
             <div className={styles.modeToggle}>
               <button 
                 className={`${styles.modeBtn} ${appMode === 'practice' ? styles.activeMode : ''}`}

@@ -153,7 +153,44 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  gap: 0.75rem;
 }
+
+.backToTopBtn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 0.4rem 0.9rem;
+  border-radius: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.backToTopBtn:hover {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  background: rgba(79, 70, 229, 0.06);
+}
+
+/* モバイル用の戻るボタン */
+.backBtn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+
 
 .modeToggle {
   display: flex;
