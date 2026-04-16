@@ -13,7 +13,8 @@ const OUTPUT_PATH = path.join(__dirname, '..', 'questions.xlsx');
 
 const headers = [
   'id', 'genre', 'sentence', 'option1', 'option2', 'option3', 'option4',
-  'correct(1-4)', 'elements(|区切り)', 'title', 'body', 'note', 'translation'
+  'correct(1-4)', 'elements(|区切り)', 'title', 'body', 'note', 'translation',
+  'source(出典、省略可)', 'difficulty(A〜D、省略可)'
 ];
 
 // 現在のデータを直接埋め込む（既存data.jsから移植）

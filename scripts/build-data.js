@@ -16,6 +16,8 @@
  * K: body        - 解説本文
  * L: note        - 補足メモ (省略可)
  * M: translation - 日本語訳 (省略可)
+ * N: source      - 出典（大学名など、省略可）
+ * O: difficulty  - 難易度（A/B/C/D、省略可）
  *
  * 使い方: node scripts/build-data.js
  */
@@ -40,7 +42,7 @@ const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 const dataRows = rows.slice(1).filter(row => row[0] !== '');
 
 const questions = dataRows.map(row => {
-  const [id, genre, sentence, opt1, opt2, opt3, opt4, correct, elements, title, body, note, translation] = row;
+  const [id, genre, sentence, opt1, opt2, opt3, opt4, correct, elements, title, body, note, translation, source, difficulty] = row;
 
   // 空所表記を統一
   const normalizedSentence = String(sentence).replace(/\s*\([　 ]*\)\s*/g, ' ______ ');
@@ -52,6 +54,8 @@ const questions = dataRows.map(row => {
     options: [opt1, opt2, opt3, opt4].map(o => String(o).replace(/^[①②③④]\s*/, '')),
     correctOption: parseInt(correct, 10) - 1,
     correctElements: String(elements).split('|'),
+    source: String(source || ''),
+    difficulty: String(difficulty || ''),
     explanation: {
       title: String(title || ''),
       body: String(body || '').replace(/<br>/g, '\n'),
