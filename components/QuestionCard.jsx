@@ -5,7 +5,19 @@ export default function QuestionCard({ question, selectedOption, onSelectOption 
 
   return (
     <div className={styles.card}>
-      <h2 className={styles.questionNumber}>Question {question.id}</h2>
+      <div className={styles.questionMeta}>
+        <h2 className={styles.questionNumber}>問題 {question.id}</h2>
+        <div className={styles.metaTags}>
+          {question.difficulty && (
+            <span className={styles.diffBadge} data-level={question.difficulty}>
+              難易度 {question.difficulty}
+            </span>
+          )}
+          {question.source && (
+            <span className={styles.sourceBadge}>📌 {question.source}</span>
+          )}
+        </div>
+      </div>
       <p className={styles.sentence}>
         {question.sentence.split('______').map((part, index, array) => (
           <span key={index}>
