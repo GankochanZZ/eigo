@@ -33,97 +33,11 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
 
   const handleCategoryClick = (category) => {
     if (category.sets.length === 0) return;
-    setSelectedCategory(category);
-    setSelectedSets([category.sets[0]]); // デフォルトで最初のセットを選択
-  };
-
-  const toggleSet = (setName) => {
-    if (selectedSets.includes(setName)) {
-      if (selectedSets.length > 1) {
-        setSelectedSets(selectedSets.filter(s => s !== setName));
-      }
-    } else {
-      setSelectedSets([...selectedSets, setName]);
-    }
-  };
-
-  const handleStart = async (mode) => {
-    const selection = selectedSets.map(setName => ({
-      category: selectedCategory.name,
-      set: setName
-    }));
-    await onLoadQuestions(selection);
-    setAppMode(mode);
+    onLoadQuestions(category); // 親にカテゴリ選択を通知
   };
 
   return (
     <div className={styles.page}>
-
-      {/* Config Modal */}
-      {showConfig && (
-        <div className={styles.modalOverlay} onClick={() => setShowConfig(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>⚙️ APIキー設定</h3>
-            <p className={styles.modalDesc}>
-              Gemini APIキーを入力するとAI採点・音声入力が使えます。キーはこのブラウザにのみ保存されます。
-            </p>
-            <input
-              type="password"
-              className={styles.modalInput}
-              value={apiKey}
-              onChange={handleApiKeyChange}
-              placeholder="AIzaSy..."
-            />
-            <p className={styles.modalHint}>※未入力の場合はデモ判定モードになります。</p>
-            <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
-              閉じる
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Set Selection Modal */}
-      {selectedCategory && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedCategory(null)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>{ICON_MAP[selectedCategory.name]} {selectedCategory.name}：セットを選択</h3>
-            <p className={styles.modalDesc}>
-              学習したい問題セットを選んでください（複数選択可）。
-            </p>
-            
-            <div className={styles.setGrid}>
-              {selectedCategory.sets.map(setName => (
-                <div 
-                  key={setName} 
-                  className={`${styles.setItem} ${selectedSets.includes(setName) ? styles.setItemActive : ''}`}
-                  onClick={() => toggleSet(setName)}
-                >
-                  <input 
-                    type="checkbox" 
-                    className={styles.setCheckbox} 
-                    checked={selectedSets.includes(setName)}
-                    onChange={() => {}} // onClickで制御
-                  />
-                  <span className={styles.setName}>{setName}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className={styles.setActions}>
-              <button className={styles.cancelBtn} onClick={() => setSelectedCategory(null)}>
-                キャンセル
-              </button>
-              <button 
-                className={styles.startBtn} 
-                onClick={() => handleStart('practice')}
-                disabled={selectedSets.length === 0}
-              >
-                学習開始
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Header */}
       <header className={styles.header}>

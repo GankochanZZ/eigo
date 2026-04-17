@@ -8,9 +8,11 @@ import FeedbackPanel from '../components/FeedbackPanel';
 import Sidebar from '../components/Sidebar';
 import TestModeRunner from '../components/TestModeRunner';
 import TopHero from '../components/TopHero';
+import SetSelector from '../components/SetSelector';
 
 export default function Home() {
   const [appMode, setAppModeState] = useState('top'); // 'top' | 'practice' | 'test'
+  const [activeSubject, setActiveSubject] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(null);
   const [globalError, setGlobalError] = useState(null);
@@ -29,6 +31,8 @@ export default function Home() {
   const setAppMode = (mode) => {
     if (mode === 'top') {
       history.pushState({ mode: 'top' }, '', '/');
+      setActiveSubject(null);
+      setQuestions([]);
     } else {
       history.pushState({ mode }, '', `?mode=${mode}`);
     }
@@ -40,6 +44,10 @@ export default function Home() {
     const handlePopState = (e) => {
       const mode = e.state?.mode ?? 'top';
       setAppModeState(mode);
+      if (mode === 'top') {
+        setActiveSubject(null);
+        setQuestions([]);
+      }
     };
     window.addEventListener('popstate', handlePopState);
     // 初回アクセス時に top を履歴に積む
@@ -65,10 +73,20 @@ export default function Home() {
     localStorage.setItem('gemini_api_key', e.target.value);
   };
 
-  const loadQuestions = async (selectedSets) => {
+  const handleSubjectSelect = (subject) => {
+    setActiveSubject(subject);
+    setAppMode('practice');
+  };
+
+  const loadQuestions = async (selectedSetsNames) => {
     setIsLoading(true);
     setGlobalError(null);
     try {
+      const selectedSets = selectedSetsNames.map(setName => ({
+        category: activeSubject.name,
+        set: setName
+      }));
+
       const resp = await fetch('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,7 +202,7 @@ export default function Home() {
         setShowConfig={setShowConfig} 
         apiKey={apiKey} 
         handleApiKeyChange={handleApiKeyChange}
-        onLoadQuestions={loadQuestions}
+        onLoadQuestions={handleSubjectSelect}
       />
     );
   }
@@ -196,6 +214,30 @@ export default function Home() {
           システムエラー: {globalError}
         </div>
       )}
+
+      {/* Config Modal */}
+      {showConfig && (
+        <div className={styles.configModalOverlay} onClick={() => setShowConfig(false)}>
+          <div className={styles.configModal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.configModalTitle}>⚙️ APIキー設定</h3>
+            <p className={styles.configModalDesc}>
+              Gemini APIキーを入力するとAI採点・音声入力が使えます。キーはこのブラウザにのみ保存されます。
+            </p>
+            <input
+              type="password"
+              className={styles.configModalInput}
+              value={apiKey}
+              onChange={handleApiKeyChange}
+              placeholder="AIzaSy..."
+            />
+            <p className={styles.configModalHint}>※未入力の場合はデモ判定モードになります。</p>
+            <button className={styles.configModalClose} onClick={() => setShowConfig(false)}>
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={styles.mobileHeader}>
         <button className={styles.hamburgerBtn} onClick={() => setIsSidebarOpen(true)}>
           ☰ メニュー
@@ -230,20 +272,6 @@ export default function Home() {
           ⚙️ API設定
         </button>
       </div>
-      
-      {showConfig && (
-        <div className={styles.configPanel}>
-          <label className={styles.configLabel}>Gemini API キー (ブラウザに保存されます)</label>
-          <input 
-            type="password" 
-            className={styles.configInput} 
-            value={apiKey} 
-            onChange={handleApiKeyChange}
-            placeholder="AI23..." 
-          />
-          <p className={styles.configHint}>※未入力の場合はデモ判定モードになります。</p>
-        </div>
-      )}
 
       <header className={styles.header}>
         <h1 className={styles.title} onClick={() => setAppMode('top')} style={{ cursor: 'pointer' }}>
@@ -258,6 +286,12 @@ export default function Home() {
             <span className={styles.spinner}></span>
             <p>問題を読み込み中...</p>
           </div>
+        ) : questions.length === 0 && activeSubject ? (
+          <SetSelector 
+            category={activeSubject} 
+            onCancel={() => setAppMode('top')}
+            onStart={loadQuestions}
+          />
         ) : appMode === 'test' ? (
           <TestModeRunner questions={questions} apiKey={apiKey} />
         ) : (

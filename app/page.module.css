@@ -236,48 +236,100 @@
   color: var(--text-primary);
 }
 
-.configPanel {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+/* Config Modal */
+.configModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
   padding: 1.5rem;
-  margin-bottom: 2rem;
-  animation: slideDown 0.3s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.configLabel {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-
-.configInput {
+.configModal {
+  background: #1e1b4b;
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: var(--bg-color);
-  color: var(--text-primary);
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 2.5rem;
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.configModalTitle {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.configModalDesc {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.configModalInput {
+  width: 100%;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: white;
   font-family: monospace;
-  margin-bottom: 0.5rem;
-  transition: border-color 0.2s ease;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.2s;
 }
 
-.configInput:focus {
+.configModalInput:focus {
   outline: none;
-  border-color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
 }
 
-.configHint {
+.configModalHint {
+  color: rgba(255, 255, 255, 0.4);
   font-size: 0.85rem;
-  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.configModalClose {
+  width: 100%;
+  padding: 1rem;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.configModalClose:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
