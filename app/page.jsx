@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import styles from './page.module.css';
-import { questions } from './data';
 import QuestionCard from '../components/QuestionCard';
 import ReasonInput from '../components/ReasonInput';
 import FeedbackPanel from '../components/FeedbackPanel';
@@ -12,8 +11,10 @@ import TopHero from '../components/TopHero';
 
 export default function Home() {
   const [appMode, setAppModeState] = useState('top'); // 'top' | 'practice' | 'test'
+  const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(null);
   const [globalError, setGlobalError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const handleErr = (msg, url, line, col, error) => {
@@ -45,6 +46,7 @@ export default function Home() {
     history.replaceState({ mode: 'top' }, '', '/');
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
   const [selectedOption, setSelectedOption] = useState(null);
   const [reason, setReason] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -63,12 +65,36 @@ export default function Home() {
     localStorage.setItem('gemini_api_key', e.target.value);
   };
 
-  const currentQuestion = currentIndex !== null ? questions[currentIndex] : null;
+  const loadQuestions = async (selectedSets) => {
+    setIsLoading(true);
+    setGlobalError(null);
+    try {
+      const resp = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selectedSets })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to load questions');
+      
+      setQuestions(data.questions);
+      setCurrentIndex(0);
+      setSelectedOption(null);
+      setReason('');
+      setFeedback(null);
+    } catch (err) {
+      setGlobalError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const currentQuestion = currentIndex !== null && questions.length > 0 ? questions[currentIndex] : null;
 
   const handleSubmit = () => submitExplanation(reason);
 
   const submitExplanation = async (textToSubmit) => {
-    if (selectedOption === null) return;
+    if (selectedOption === null || !currentQuestion) return;
 
     if (!textToSubmit.trim()) {
       // AI採点スキップ処理
@@ -157,7 +183,8 @@ export default function Home() {
         showConfig={showConfig} 
         setShowConfig={setShowConfig} 
         apiKey={apiKey} 
-        handleApiKeyChange={handleApiKeyChange} 
+        handleApiKeyChange={handleApiKeyChange}
+        onLoadQuestions={loadQuestions}
       />
     );
   }
@@ -178,6 +205,7 @@ export default function Home() {
       </div>
 
       <Sidebar 
+        questions={questions}
         currentIndex={currentIndex} 
         onSelectQuestion={changeQuestion} 
         isOpen={isSidebarOpen}
@@ -225,7 +253,12 @@ export default function Home() {
       </header>
 
       <main className={styles.mainContent}>
-        {appMode === 'test' ? (
+        {isLoading ? (
+          <div className={styles.loadingState}>
+            <span className={styles.spinner}></span>
+            <p>問題を読み込み中...</p>
+          </div>
+        ) : appMode === 'test' ? (
           <TestModeRunner questions={questions} apiKey={apiKey} />
         ) : (
           !currentQuestion ? (

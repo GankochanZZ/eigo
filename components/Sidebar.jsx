@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react';
 import styles from './Sidebar.module.css';
-import { questions } from '../app/data';
 
-export default function Sidebar({ currentIndex, onSelectQuestion, isOpen, onClose }) {
+export default function Sidebar({ questions, currentIndex, onSelectQuestion, isOpen, onClose }) {
   // グループ化: { "時制": [ { id: "006", originalIndex: 0 }, ... ] }
   const groupedQuestions = useMemo(() => {
+    if (!questions) return {};
     return questions.reduce((acc, q, index) => {
       if (!acc[q.genre]) acc[q.genre] = [];
-      acc[q.genre].push({ id: q.id, originalIndex: index, difficulty: q.difficulty || '' });
+      acc[q.genre].push({ id: q.originalId || q.id, originalIndex: index, difficulty: q.difficulty || '' });
       return acc;
     }, {});
-  }, []);
+  }, [questions]);
 
   // 開閉状態の管理 (デフォルトで全て開いておくかどうかは要件次第、今回は開いておく)
   const [openGenres, setOpenGenres] = useState(

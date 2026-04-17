@@ -333,3 +333,111 @@
 .modalClose:active {
   background: #4f46e5;
 }
+
+/* ===== Set Selection ===== */
+.setGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.setGrid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.setGrid::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+}
+
+.setItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.setItem:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.setItemActive {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.setCheckbox {
+  appearance: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.1s;
+}
+
+.setCheckbox:checked {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+
+.setCheckbox:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.setName {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: white;
+}
+
+.setActions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.startBtn {
+  flex: 1;
+  padding: 0.9rem;
+  border-radius: 10px;
+  background: #6366f1;
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+}
+
+.startBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  padding: 0.9rem 1.2rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.6);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.1);
+}

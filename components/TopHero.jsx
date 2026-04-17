@@ -1,6 +1,61 @@
+import { useState, useEffect } from 'react';
 import styles from './TopHero.module.css';
 
-export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey, handleApiKeyChange }) {
+const ICON_MAP = {
+  '単語': '🔤',
+  '文法': '📝',
+  '解釈': '🔍',
+  '長文': '📄'
+};
+
+export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey, handleApiKeyChange, onLoadQuestions }) {
+  const [subjects, setSubjects] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSets, setSelectedSets] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSubjects() {
+      try {
+        const res = await fetch('/api/subjects');
+        const data = await res.json();
+        if (data.subjects) {
+          setSubjects(data.subjects);
+        }
+      } catch (err) {
+        console.error('Failed to load subjects:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSubjects();
+  }, []);
+
+  const handleCategoryClick = (category) => {
+    if (category.sets.length === 0) return;
+    setSelectedCategory(category);
+    setSelectedSets([category.sets[0]]); // デフォルトで最初のセットを選択
+  };
+
+  const toggleSet = (setName) => {
+    if (selectedSets.includes(setName)) {
+      if (selectedSets.length > 1) {
+        setSelectedSets(selectedSets.filter(s => s !== setName));
+      }
+    } else {
+      setSelectedSets([...selectedSets, setName]);
+    }
+  };
+
+  const handleStart = async (mode) => {
+    const selection = selectedSets.map(setName => ({
+      category: selectedCategory.name,
+      set: setName
+    }));
+    await onLoadQuestions(selection);
+    setAppMode(mode);
+  };
+
   return (
     <div className={styles.page}>
 
@@ -23,6 +78,49 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
             <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
               閉じる
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Set Selection Modal */}
+      {selectedCategory && (
+        <div className={styles.modalOverlay} onClick={() => setSelectedCategory(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>{ICON_MAP[selectedCategory.name]} {selectedCategory.name}：セットを選択</h3>
+            <p className={styles.modalDesc}>
+              学習したい問題セットを選んでください（複数選択可）。
+            </p>
+            
+            <div className={styles.setGrid}>
+              {selectedCategory.sets.map(setName => (
+                <div 
+                  key={setName} 
+                  className={`${styles.setItem} ${selectedSets.includes(setName) ? styles.setItemActive : ''}`}
+                  onClick={() => toggleSet(setName)}
+                >
+                  <input 
+                    type="checkbox" 
+                    className={styles.setCheckbox} 
+                    checked={selectedSets.includes(setName)}
+                    onChange={() => {}} // onClickで制御
+                  />
+                  <span className={styles.setName}>{setName}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.setActions}>
+              <button className={styles.cancelBtn} onClick={() => setSelectedCategory(null)}>
+                キャンセル
+              </button>
+              <button 
+                className={styles.startBtn} 
+                onClick={() => handleStart('practice')}
+                disabled={selectedSets.length === 0}
+              >
+                学習開始
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -50,48 +148,30 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
 
         {/* Subject Cards */}
         <div className={styles.subjectGrid}>
-
-          {/* 単語 - Coming Soon */}
-          <div className={styles.subjectCardLocked}>
-            <span className={styles.subjectIcon}>🔤</span>
-            <div className={styles.subjectName}>単語</div>
-            <div className={styles.comingSoon}>近日公開</div>
-          </div>
-
-          {/* 文法 - Active */}
-          <div className={styles.subjectCardActive}>
-            <span className={styles.subjectIcon}>📝</span>
-            <div className={styles.subjectName}>文法</div>
-            <div className={styles.subjectModes}>
-              <button
-                className={styles.modeBtn}
-                onClick={() => setAppMode('practice')}
-              >
-                一問一答
-              </button>
-              <button
-                className={styles.modeBtn}
-                onClick={() => setAppMode('test')}
-              >
-                テスト
-              </button>
-            </div>
-          </div>
-
-          {/* 解釈 - Coming Soon */}
-          <div className={styles.subjectCardLocked}>
-            <span className={styles.subjectIcon}>🔍</span>
-            <div className={styles.subjectName}>解釈</div>
-            <div className={styles.comingSoon}>近日公開</div>
-          </div>
-
-          {/* 長文 - Coming Soon */}
-          <div className={styles.subjectCardLocked}>
-            <span className={styles.subjectIcon}>📄</span>
-            <div className={styles.subjectName}>長文</div>
-            <div className={styles.comingSoon}>近日公開</div>
-          </div>
-
+          {loading ? (
+            <div style={{ color: 'white', gridColumn: 'span 2' }}>読み込み中...</div>
+          ) : (
+            subjects.map(subject => {
+              const isActive = subject.sets.length > 0;
+              return (
+                <div 
+                  key={subject.name}
+                  className={isActive ? styles.subjectCardActive : styles.subjectCardLocked}
+                  onClick={() => isActive && handleCategoryClick(subject)}
+                  style={{ cursor: isActive ? 'pointer' : 'default' }}
+                >
+                  <span className={styles.subjectIcon}>{ICON_MAP[subject.name]}</span>
+                  <div className={styles.subjectName}>{subject.name}</div>
+                  {!isActive && <div className={styles.comingSoon}>近日公開</div>}
+                  {isActive && (
+                    <div className={styles.comingSoon} style={{ background: 'rgba(99,102,241,0.4)', color: 'white' }}>
+                      {subject.sets.length} セット
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
 
         {/* Features */}
