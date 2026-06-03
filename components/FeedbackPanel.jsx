@@ -1,6 +1,6 @@
 import styles from './FeedbackPanel.module.css';
 
-export default function FeedbackPanel({ feedback }) {
+export default function FeedbackPanel({ feedback, isInterpretation }) {
   if (!feedback) return null;
 
   if (feedback.error) {
@@ -17,16 +17,18 @@ export default function FeedbackPanel({ feedback }) {
         {feedback.skippedAI ? '解答結果' : 'AI判定結果'}
       </h3>
       
-      <div className={styles.section}>
-        <h4 className={styles.label}>選択肢の正誤:</h4>
-        <div className={feedback.isOptionCorrect ? styles.correct : styles.incorrect}>
-          {feedback.isOptionCorrect ? '✅ 正解' : '❌ 不正解'}
+      {!isInterpretation && (
+        <div className={styles.section}>
+          <h4 className={styles.label}>選択肢の正誤:</h4>
+          <div className={feedback.isOptionCorrect ? styles.correct : styles.incorrect}>
+            {feedback.isOptionCorrect ? '✅ 正解' : '❌ 不正解'}
+          </div>
         </div>
-      </div>
+      )}
 
       {!feedback.skippedAI && (
         <div className={styles.section}>
-          <h4 className={styles.label}>理由の評価 {feedback.isEvaluating ? '' : `(${feedback.aiScore} / 100点)`}:</h4>
+          <h4 className={styles.label}>{isInterpretation ? '和訳の評価' : '理由の評価'} {feedback.isEvaluating ? '' : `(${feedback.aiScore} / 100点)`}:</h4>
           {feedback.isEvaluating ? (
              <div className={styles.evaluatingState}>
                <span className={styles.spinner}></span> AIが採点基準を照らし合わせています...

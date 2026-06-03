@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import styles from './ReasonInput.module.css';
 
-export default function ReasonInput({ value, onChange, disabled, onVoiceComplete }) {
+export default function ReasonInput({ value, onChange, disabled, onVoiceComplete, customLabel, customPlaceholder }) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef(null);
@@ -77,7 +77,7 @@ export default function ReasonInput({ value, onChange, disabled, onVoiceComplete
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <label className={styles.label}>なぜその答えを選んだのですか？（理由）</label>
+        <label className={styles.label}>{customLabel || 'なぜその答えを選んだのですか？（理由）'}</label>
         <button 
           className={`${styles.micBtn} ${isRecording ? styles.recording : ''}`}
           onClick={toggleRecording}
@@ -89,7 +89,7 @@ export default function ReasonInput({ value, onChange, disabled, onVoiceComplete
       </div>
       <textarea
         className={styles.textarea}
-        placeholder="例: look forward to の to は前置詞なので、後ろには動名詞が来るため。"
+        placeholder={customPlaceholder || "例: look forward to の to は前置詞なので、後ろには動名詞が来るため。"}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={4}

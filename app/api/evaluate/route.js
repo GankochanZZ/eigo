@@ -26,11 +26,12 @@ async function callWithRetry(fn, maxRetries = 3) {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { id, question, selectedAnswer, correctAnswer, reasonText, correctElements, apiKey } = body;
+    const { id, category, question, selectedAnswer, correctAnswer, reasonText, correctElements, explanation, apiKey } = body;
 
     const activeApiKey = apiKey || process.env.GEMINI_API_KEY;
+    const isInterpretation = category === '解釈';
 
-    if (!question || !selectedAnswer || !reasonText) {
+    if (!question || (!isInterpretation && !selectedAnswer) || !reasonText) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
     }
 
@@ -58,7 +59,31 @@ export async function POST(req) {
 
     if (!aiCriteria) {
       const elementsList = correctElements.map((el, i) => `${i + 1}. ${el}`).join('\n');
-      const criteriaPrompt = `
+      
+      const criteriaPrompt = isInterpretation ? `
+あなたは優秀な予備校の英語科教務主任です。
+以下の「英文和訳問題」と「教員が用意した採点基準・模範解答」をもとに、
+生徒の『和訳』を厳密に採点するための「大学受験レベルの配点基準表」を作成してください。
+
+【問題文（英文）】
+${question}
+【模範解答（和訳）】
+${explanation?.translation || ''}
+【教員が用意した採点基準要素】
+${elementsList}
+
+【タスク】
+生徒の和訳を採点するための配点基準表（合計100点）を作成してください。
+注意：あなたが独自に細かすぎる採点項目を新しく追加しないでください。
+上記の「教員が用意した採点基準要素」と、「文全体の意味が通っていること」などを基準として、合計100点になるように配点を割り振ってください。
+
+出力は以下の配列を含むJSONのみを出力してください（Markdown装飾の \`\`\`json などのタグは一切不要です）。
+[
+  { "element": "採点項目1（例：形式主語Itを正しく訳出している）", "points": 40 },
+  { "element": "採点項目2", "points": 60 },
+  ...
+]
+` : `
 あなたは優秀な予備校の英語科教務主任です。
 以下の「文法問題」と「教員が用意した解説要素」をもとに、
 生徒の『解答理由（記述）』を厳密に採点するための「大学受験レベルの配点基準表」を作成してください。
@@ -107,10 +132,39 @@ ${elementsList}
     }
 
     // --- 【フェーズ2】生成・保存された基準を用いたユーザーの評価 ---
-    const isOptionCorrect = selectedAnswer === correctAnswer;
+    const isOptionCorrect = isInterpretation ? null : (selectedAnswer === correctAnswer);
     const rubricString = typeof aiCriteria === 'string' ? aiCriteria : JSON.stringify(aiCriteria, null, 2);
 
-    const evaluationPrompt = `あなたは高校の英語教師です。
+    const evaluationPrompt = isInterpretation ? `あなたは高校の英語教師です。
+以下の【問題】と【配点基準】に従って、生徒の「和訳」を採点・評価してください。
+なお、生徒の入力は音声入力を使っている場合があるため、多少の誤字脱字が含まれる前提で対応し、表現のブレを柔軟に解釈してください。
+
+【問題文（英文）】
+${question}
+【模範解答】
+${explanation?.translation || ''}
+
+【評価・配点基準（合計100点）】
+採点（点数算出）の際は、この基準に書かれた要素が和訳に含まれているかを厳密にチェックして合計点を出してください。
+${rubricString}
+
+【生徒の和訳】
+${reasonText}
+
+【採点とフィードバックのルール】
+1. 生徒の和訳は音声入力のため誤字・脱字が含まれている場合があります。誤字があっても自分の中で正しく読み替えた上で採点してください。
+2. 意訳でも英文の構造を正しく捉えられていれば正解としてください。
+3. 100点満点でない場合は、「どの基準が満たされていなかったのか」「どこを誤訳しているか」を具体的に指摘・解説してください。
+4. 見やすさのため適宜「・」の箇条書きや改行\\nを使用し、読みやすく文章を整理してください。
+5. 文末の励まし・フォローの言葉は一切不要です。（純粋に採点の解説だけを行ってください）
+6. トーンは的確な指導スタイルとし、絶対にJSON以外のテキストは出力しないでください。
+
+以下の2つのキーを持つJSONのみを出力してください。
+{
+  "score": 0〜100の整数,
+  "evaluation": "箇条書きなどを活用した、基準に基づく具体的な解説（フォローは含めない。最大350文字程度）"
+}
+` : `あなたは高校の英語教師です。
 以下の【問題】と【配点基準】に従って、生徒の「回答」と「理由」を採点・評価してください。
 なお、生徒の理由は音声入力を使っている場合があるため、多少の誤字脱字が含まれる前提で対応し、表現のブレを柔軟に解釈してください。
 

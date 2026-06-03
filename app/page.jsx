@@ -112,12 +112,14 @@ export default function Home() {
   const handleSubmit = () => submitExplanation(reason);
 
   const submitExplanation = async (textToSubmit) => {
-    if (selectedOption === null || !currentQuestion) return;
+    const isInterpretation = currentQuestion?.category === '解釈' || (currentQuestion?.options && currentQuestion.options.every(o => !o));
+
+    if ((!isInterpretation && selectedOption === null) || !currentQuestion) return;
 
     if (!textToSubmit.trim()) {
       // AI採点スキップ処理
       setFeedback({
-        isOptionCorrect: selectedOption === currentQuestion.correctOption,
+        isOptionCorrect: isInterpretation ? true : selectedOption === currentQuestion.correctOption,
         aiEvaluation: null,
         aiScore: null,
         correctElements: currentQuestion.correctElements,
@@ -129,7 +131,7 @@ export default function Home() {
 
     setIsEvaluating(true);
     setFeedback({
-      isOptionCorrect: selectedOption === currentQuestion.correctOption,
+      isOptionCorrect: isInterpretation ? true : selectedOption === currentQuestion.correctOption,
       aiEvaluation: null,
       aiScore: null,
       correctElements: currentQuestion.correctElements,
@@ -143,11 +145,13 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: currentQuestion.id,
+          category: currentQuestion.category,
           question: currentQuestion.sentence,
-          selectedAnswer: currentQuestion.options[selectedOption],
-          correctAnswer: currentQuestion.options[currentQuestion.correctOption],
+          selectedAnswer: isInterpretation ? null : currentQuestion.options[selectedOption],
+          correctAnswer: isInterpretation ? null : currentQuestion.options[currentQuestion.correctOption],
           reasonText: textToSubmit,
           correctElements: currentQuestion.correctElements,
+          explanation: currentQuestion.explanation, // Also pass explanation in case it's needed for model translation
           apiKey: apiKey
         }),
       });
@@ -165,7 +169,7 @@ export default function Home() {
       }
 
       setFeedback({
-        isOptionCorrect: selectedOption === currentQuestion.correctOption,
+        isOptionCorrect: isInterpretation ? true : selectedOption === currentQuestion.correctOption,
         aiEvaluation: data.evaluation,
         aiScore: data.score !== undefined ? data.score : NaN,
         correctElements: currentQuestion.correctElements,
@@ -206,6 +210,8 @@ export default function Home() {
       />
     );
   }
+
+  const isInterpretation = currentQuestion?.category === '解釈' || (currentQuestion?.options && currentQuestion.options.every(o => !o));
 
   return (
     <div className={styles.dashboard}>
@@ -322,14 +328,16 @@ export default function Home() {
                 onChange={(val) => {
                   if (!feedback) setReason(val);
                 }}
-                disabled={feedback !== null || selectedOption === null}
+                disabled={feedback !== null || (!isInterpretation && selectedOption === null)}
+                customLabel={isInterpretation ? "和訳を入力してください" : undefined}
+                customPlaceholder={isInterpretation ? "例: その有名な著者によって書かれた本は面白かった。" : undefined}
               />
 
               {!feedback && (
                 <button 
                   className={styles.submitBtn} 
                   onClick={handleSubmit}
-                  disabled={selectedOption === null || isEvaluating}
+                  disabled={(!isInterpretation && selectedOption === null) || isEvaluating}
                 >
                   {isEvaluating ? (
                     <div className={styles.evaluating}>
@@ -337,14 +345,14 @@ export default function Home() {
                       判定中...
                     </div>
                   ) : (
-                    '解答と理由を送信'
+                    isInterpretation ? '和訳を送信' : '解答と理由を送信'
                   )}
                 </button>
               )}
 
               {feedback && (
                 <>
-                  <FeedbackPanel feedback={feedback} />
+                  <FeedbackPanel feedback={feedback} isInterpretation={isInterpretation} />
                   <button className={styles.nextBtn} onClick={handleNext}>
                     次の問題へ
                   </button>
