@@ -17,7 +17,7 @@ export default function TopHero({ setAppMode, showConfig, setShowConfig, apiKey,
   useEffect(() => {
     async function fetchSubjects() {
       try {
-        const res = await fetch('/api/subjects');
+        const res = await fetch(`/api/subjects?t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         if (data.subjects) {
           setSubjects(data.subjects);
